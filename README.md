@@ -12,7 +12,8 @@ The TOFU dataset serves as a benchmark for evaluating unlearning performance of 
 - [**Summary on Twitter**](https://x.com/_akhaliq/status/1745643293839327268): A concise summary and key takeaways from the project.
 
 ## Updates 03/18
-We have updated a new evaluation pipeline, see the following section on model evaluation. We notice that Llama2 model has reproducibility issue due to the internal randomness of flash attention. You are encouraged to collect your own retain results. Our huggingface leaderboard results and the numbers/figures in the paper are also subject to update. Feel free to contact us if you run into any issue! 
+
+We have updated a new evaluation pipeline, see the following section on model evaluation. We notice that Llama2 model has reproducibility issue due to the internal randomness of flash attention. You are encouraged to collect your own retain results. Our huggingface leaderboard results and the numbers/figures in the paper are also subject to update. Feel free to contact us if you run into any issue!
 
 ## Applicability 🚀
 
@@ -47,33 +48,47 @@ master_port=18765
 split=full
 model=phi
 lr=2e-5
-CUDA_VISIBLE_DEVICES=0,1 torchrun --nproc_per_node=2 --master_port=$master_port finetune.py --config-name=finetune.yaml split=${split} batch_size=4 gradient_accumulation_steps=4 model_family=${model} lr=${lr}
+CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 --master_port=$master_port finetune.py --config-name=finetune.yaml split=${split} batch_size=2 gradient_accumulation_steps=8 model_family=${model} lr=${lr}
+```
+
+```
+master_port=18765
+split=full
+model=llama2-7b
+lr=2e-5
+CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 --master_port=$master_port finetune.py --config-name=finetune.yaml split=${split} batch_size=2 gradient_accumulation_steps=8 model_family=${model} lr=${lr}
 ```
 
 ## Forget models
+
 Make sure that the path of the model to be unlearned is correctly provided in the `config/model_config.yaml` file. To unlearn a model on a forget set, use the following command:
+
 ```
-CUDA_VISIBLE_DEVICES=0,1 torchrun --nproc_per_node=2 --master_port=$master_port forget.py --config-name=forget.yaml split=${split} batch_size=4 gradient_accumulation_steps=4 model_family=${model} lr=${lr}
+CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 --master_port=$master_port forget.py --config-name=forget.yaml split=${split} batch_size=2 gradient_accumulation_steps=4 model_family=${model} lr=${lr}
 ```
 
 ## Evaluate models
+
 Once you have the model trained, you can generate the statistics used for evaluation with the following command:
+
 ```
 CUDA_VISIBLE_DEVICES=0 torchrun --nproc_per_node=1 --master_port=$port evaluate_util.py\
  model_family=$model_family split=$split\
  model_path=$model_path
 ```
+
 You can modify the configuration in config/eval_everything.yaml. We suggest to evaluate with one gpu, meanwhile we are also working on a script that allows multi-gpu evaluations.
 
 The evaluation result will by default be dumped to `${model_path}/eval_results/ds_size${ds_size}`, you can also modify the `save_dir` field in `config/eval_everything.yaml`
 
-The evaluation results on four datasets (forget, retain, real_world, real_author) will be aggregated into one json file named `eval_log_aggregated.json`. Finally, you can run 
+The evaluation results on four datasets (forget, retain, real_world, real_author) will be aggregated into one json file named `eval_log_aggregated.json`. Finally, you can run
+
 ```
 python aggregate_eval_stat.py retain_result=${path_to_aggregated_retain_result} ckpt_result=${path_to_aggregated_retain_result} \
  method_name=${method_name} save_file=${save_filename}
 ```
-to obtain an aggregated csv format result which contains the overall model utility and forget quality. Here the `${path_to_aggregated_retain_result}` and `${path_to_aggregated_retain_result}` are the path to your `eval_log_aggregated.json`. The retain results are uploaded in `data/`.
 
+to obtain an aggregated csv format result which contains the overall model utility and forget quality. Here the `${path_to_aggregated_retain_result}` and `${path_to_aggregated_retain_result}` are the path to your `eval_log_aggregated.json`. The retain results are uploaded in `data/`.
 
 ### Available forget sets are:
 
@@ -83,7 +98,6 @@ to obtain an aggregated csv format result which contains the overall model utili
 
 Retain sets corresponding to each forget set are also available, which can be used to train an Oracle model.
 
-
 ### Push to Leaderboard
 
 Head over to our [**Leaderboard on Hugging Face Spaces**](https://huggingface.co/spaces/locuslab/tofu_leaderboard) and drop your evaluated results file!
@@ -91,6 +105,7 @@ Head over to our [**Leaderboard on Hugging Face Spaces**](https://huggingface.co
 ## Citing Our Work
 
 If you find our codebase and dataset beneficial, please cite our work:
+
 ```
 @misc{tofu2024,
       title={TOFU: A Task of Fictitious Unlearning for LLMs}, 
