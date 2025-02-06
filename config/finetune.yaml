@@ -1,7 +1,7 @@
 model_family: phi
 
 LoRA:
-  r: 8
+  r: 0
   alpha: 32
   dropout: 0.05
 

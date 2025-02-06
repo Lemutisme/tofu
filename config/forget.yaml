@@ -1,5 +1,5 @@
-model_family: llama2-7b
-model_path: null
+model_family: phi
+model_path: /home/calus/Projects/data/llm_weights/TOFU/ft_epoch5_lr2e-05_phi_full_wd0.01
 LoRA:
   r: 0
   alpha: 32
